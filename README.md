@@ -29,7 +29,7 @@ Key metrics analyzed:
 Conversion rate
 Click-through rate
 Session duration
-Results
+
 Results include insights on whether the treatment version outperforms the control version based on statistical significance and confidence intervals.
 
 License
