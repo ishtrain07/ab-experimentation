@@ -28,6 +28,14 @@ PYTHONPATH=src uvicorn excuse_auditor.api:app --reload
 
 Open http://127.0.0.1:8000. The sample invoice and quote load on their own. Use the other buttons for a mismatched size and for WhatsApp wording.
 
+The public co-founder demo is meant to run **without** `NEBIUS_API_KEY` (`local-calculation` mode). Bundled series are synthetic/demo-only; the UI labels that clearly.
+
+## How to use (on-page)
+
+1. Load a sample or paste the last invoice.
+2. Add today’s quote or WhatsApp-style message.
+3. Press **Check the explanation**, then copy the reply.
+
 ## Tests
 
 ```bash
@@ -50,6 +58,37 @@ export TOKEN_FACTORY_BASE_URL=https://api.tokenfactory.us-central1.nebius.com/v1
 - Confirm the model ids in the Token Factory console. They change, and the README should match the ids that actually ran.
 
 The health endpoint reports `local-calculation` or `token-factory`.
+
+## Public demo hardening (practical, not production claims)
+
+Focused protections for a temporary public tunnel:
+
+- Request field limits and null-byte rejection on `/api/audits`
+- Body size guard via `Content-Length` (413 when oversized)
+- Simple per-IP rate limit on `/api/*` (burst-friendly, not a WAF)
+- Security headers: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, CSP `frame-ancestors 'none'`
+- `Cache-Control: no-store` on API responses
+- Interactive OpenAPI docs disabled unless `AUDITOR_ENABLE_DOCS=1`
+- No open CORS; browser UI talks same-origin only
+- No file uploads; documents are pasted text only
+- UI escapes audit text before `innerHTML` insertion
+
+This is demo hygiene, not a production security posture.
+
+## Future: WhatsApp Cloud API integration
+
+Not wired yet (no Meta credentials). Planned path when credentials exist:
+
+1. **Webhook verification** — Meta `GET` challenge with `hub.verify_token` matching a secret you set; respond with `hub.challenge`.
+2. **Signature verification** — On every `POST`, validate `X-Hub-Signature-256` with the app secret before reading the body; reject mismatches.
+3. **Inbound handling** — Parse `messages` for text (paste invoice/quote), documents (download media, extract text), and audio (download media, transcribe, then extract). Map phone number → buying-desk session.
+4. **Media retrieval** — Use Graph API media id → temporary URL → download with the system user token; never store raw tokens in the client.
+5. **Processing queue / idempotency** — Deduplicate on WhatsApp `message.id`; enqueue audits so retries do not double-reply; keep work off the webhook request thread.
+6. **Outbound rules** — Prefer approved templates outside the 24-hour customer-care window; free-form session replies only while the window is open; send the audit note + fair price as the reply body.
+7. **Secrets** — Store verify token, app secret, and long-lived tokens in env/secret manager only; never commit them; rotate after demos.
+8. **Privacy / retention** — Treat supplier quotes as commercial confidential data: minimize logging, encrypt at rest if persisted, set a short retention TTL, and delete media blobs after extraction.
+
+Until that lands, the web UI “WhatsApp wording” sample demonstrates the same audit path with pasted chat text.
 
 ## Layout
 

@@ -229,3 +229,62 @@ def test_api_rejects_unreadable_document():
         json={"invoice_text": "hello", "quote_text": (SAMPLES / "quote.txt").read_text()},
     )
     assert response.status_code == 422
+
+
+def test_api_rejects_oversized_fields():
+    client = TestClient(app)
+    huge = "x" * 50_001
+    response = client.post(
+        "/api/audits",
+        json={"invoice_text": huge, "quote_text": (SAMPLES / "quote.txt").read_text()},
+    )
+    assert response.status_code == 422
+
+
+def test_api_rejects_null_bytes():
+    client = TestClient(app)
+    response = client.post(
+        "/api/audits",
+        json={
+            "invoice_text": "SUPPLIER: X\x00Y",
+            "quote_text": (SAMPLES / "quote.txt").read_text(),
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_security_headers_and_docs_disabled():
+    client = TestClient(app)
+    home = client.get("/")
+    assert home.status_code == 200
+    assert home.headers.get("x-frame-options") == "DENY"
+    assert home.headers.get("x-content-type-options") == "nosniff"
+    assert home.headers.get("referrer-policy") == "no-referrer"
+    assert "frame-ancestors 'none'" in home.headers.get("content-security-policy", "")
+
+    health = client.get("/api/health")
+    assert health.status_code == 200
+    assert health.headers.get("cache-control") == "no-store"
+
+    assert client.get("/docs").status_code == 404
+    assert client.get("/openapi.json").status_code == 404
+
+
+def test_rate_limit_on_api(monkeypatch):
+    from excuse_auditor import api as api_module
+
+    monkeypatch.setattr(api_module, "RATE_LIMIT_MAX_REQUESTS", 3)
+
+    def clear_rate_buckets(node):
+        if node.__class__.__name__ == "RateLimitMiddleware":
+            node._hits.clear()
+            return True
+        nested = getattr(node, "app", None)
+        return clear_rate_buckets(nested) if nested is not None else False
+
+    assert clear_rate_buckets(app.middleware_stack)
+
+    client = TestClient(app)
+    statuses = [client.get("/api/health").status_code for _ in range(4)]
+    assert statuses[:3] == [200, 200, 200]
+    assert statuses[3] == 429

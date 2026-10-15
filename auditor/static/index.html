@@ -183,6 +183,14 @@
       animation: rise 0.55s ease 0.08s both;
     }
 
+    .howto-title {
+      margin: 0 0 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal-deep);
+    }
     .steps {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -690,7 +698,8 @@
       <section class="panel work" aria-labelledby="work-title">
         <h2 id="work-title" class="sr-only">Audit workspace</h2>
 
-        <ol class="steps" aria-label="How to use">
+        <p class="howto-title" id="howto-title">How to use</p>
+        <ol class="steps" aria-labelledby="howto-title">
           <li data-step="1" data-active="true">
             <b>Step 1</b>
             <span>Load a sample or paste your last invoice.</span>
