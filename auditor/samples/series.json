@@ -1,0 +1,43 @@
+{
+  "label": "Demonstration series shipped with the app. These are not live mill prices.",
+  "scope": {
+    "demo": true,
+    "live_feed": false,
+    "materials": ["steel"],
+    "limitations": [
+      "Checked-in demonstration indices only; replace with a series the business trusts before negotiation use.",
+      "Explained move sums selected component percentage changes; it is not a cost model of the mill.",
+      "Shipped live demo coverage is steel (CR sheet sample). The calculation core accepts other materials when you load a matching series file."
+    ]
+  },
+  "steel": {
+    "name": "Sample CR sheet index",
+    "source": "Checked-in demonstration series",
+    "unit": "index points",
+    "requires_claim": [],
+    "points": [
+      {"date": "2026-06-01", "value": "1000"},
+      {"date": "2026-10-01", "value": "1058"}
+    ]
+  },
+  "freight": {
+    "name": "Sample freight index",
+    "source": "Checked-in demonstration series",
+    "unit": "index points",
+    "requires_claim": ["freight", "shipping", "logistics"],
+    "points": [
+      {"date": "2026-06-01", "value": "1000"},
+      {"date": "2026-10-01", "value": "1016"}
+    ]
+  },
+  "fx": {
+    "name": "Sample USD/INR",
+    "source": "Checked-in demonstration series",
+    "unit": "INR per USD",
+    "requires_claim": ["import", "imports", "dollar", "exchange", "currency"],
+    "points": [
+      {"date": "2026-06-01", "value": "83"},
+      {"date": "2026-10-01", "value": "83.747"}
+    ]
+  }
+}

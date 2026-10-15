@@ -1,0 +1,9 @@
+SUPPLIER: Mill Supply Co
+DATE: 2026-10-01
+GRADE: CR sheet
+SIZE: 2 mm
+QUANTITY: 10
+UNIT: MT
+UNIT_PRICE: 70680
+CURRENCY: INR
+REASON: Sheet is up 14% because of imports and freight.
