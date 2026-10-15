@@ -3,7 +3,7 @@ from pathlib import Path
 
 from excuse_auditor.audit import run_audit
 from excuse_auditor.extract import extract_document
-from excuse_auditor.note import percent, write_note
+from excuse_auditor.note import percent, verdict, write_note
 from excuse_auditor.series import series_label
 
 SAMPLES = Path(__file__).resolve().parents[1] / "samples"
@@ -30,6 +30,7 @@ def test_matching_quote_splits_market_from_supplier():
     assert "5.7%" in note
     assert "67146" in note
     assert "Demonstration series" in note
+    assert verdict(result) == "The supplier's reason does not cover the full increase."
 
 
 def test_mismatched_size_stops_before_a_percentage():

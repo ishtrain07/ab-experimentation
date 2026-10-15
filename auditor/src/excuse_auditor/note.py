@@ -15,6 +15,17 @@ def money(value: Decimal) -> str:
     return f"{value.quantize(_MONEY, rounding=ROUND_HALF_UP)}"
 
 
+def verdict(result: AuditResult) -> str:
+    if not result.comparable:
+        return "These two documents are not the same material, so there is no percentage to compare."
+    assert result.unexplained is not None
+    if result.unexplained > Decimal("0.005"):
+        return "The supplier's reason does not cover the full increase."
+    if result.unexplained < Decimal("-0.005"):
+        return "The quote rose by less than the cited series."
+    return "The cited series accounts for this increase."
+
+
 def write_note(invoice: CommercialDocument, quote: CommercialDocument, result: AuditResult) -> str:
     if not result.comparable:
         return result.comparison_note

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from .audit import run_audit
 from .extract import extract_document
 from .nemotron import extract_with_nano, token_factory_configured, write_with_super
-from .note import money, percent, write_note
+from .note import money, percent, verdict, write_note
 from .series import series_label
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,6 +46,7 @@ class AuditView(BaseModel):
     unit: str
     reason: str
     series_label: str
+    verdict: str
     note: str
     follow_up: str | None
     model_mode: str
@@ -90,6 +91,7 @@ def create_audit(body: AuditRequest) -> AuditView:
         unit=invoice.unit,
         reason=result.reason,
         series_label=result.series_label,
+        verdict=verdict(result),
         note=note,
         follow_up=follow_up,
         model_mode="token-factory" if token_factory_configured() else "local-calculation",

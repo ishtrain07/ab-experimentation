@@ -11,13 +11,19 @@
       margin: 0;
       background: #f6f3ee;
       color: #1c1917;
-      font: 16px/1.45 "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+      font: 17px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     }
-    main { max-width: 920px; margin: 0 auto; padding: 32px 20px 64px; }
-    h1 { font-size: 40px; line-height: 1; margin: 0 0 8px; }
-    .deck { margin: 0 0 24px; font-size: 18px; }
+    main { max-width: 960px; margin: 0 auto; padding: 28px 20px 72px; }
+    h1 { font-size: 42px; line-height: 0.95; margin: 0 0 10px; }
+    h2 { font-size: 22px; margin: 0 0 8px; }
+    .deck { margin: 0 0 18px; font-size: 20px; }
+    .panel { background: #fff; padding: 16px 18px; margin: 0 0 16px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .steps li { background: #faf7f2; padding: 12px; }
+    .steps b { display: block; color: #9a3412; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     label { display: block; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
+    .hint { margin: 4px 0 0; color: #57534e; font-size: 14px; }
     textarea, input {
       width: 100%;
       border: 1px solid #d6d3d1;
@@ -26,51 +32,72 @@
       font: 14px/1.4 ui-monospace, "Cascadia Code", monospace;
       padding: 10px;
     }
-    textarea { min-height: 220px; resize: vertical; }
+    textarea { min-height: 180px; resize: vertical; }
     .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
     button {
       border: 0;
       background: #9a3412;
       color: #fff;
-      font: 15px/1 "Iowan Old Style", Palatino, serif;
+      font: 16px/1 "Iowan Old Style", Palatino, serif;
       padding: 12px 14px;
       cursor: pointer;
     }
     button.secondary { background: #44403c; }
-    .result { background: #fff; border-top: 4px solid #9a3412; padding: 16px 18px; }
+    .result { background: #fff; border-top: 4px solid #9a3412; padding: 18px; }
+    .verdict { font-size: 26px; line-height: 1.2; margin: 0 0 12px; }
     .figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
-    .figures div { background: #faf7f2; padding: 10px; }
-    .figures b { display: block; font-size: 28px; }
-    .note { font-size: 17px; }
-    .warn { background: #1c1917; color: #faf7f2; padding: 14px; }
-    .meta { color: #57534e; font-size: 13px; }
+    .figures div { background: #faf7f2; padding: 12px; }
+    .figures span { display: block; color: #57534e; font-size: 14px; }
+    .figures b { display: block; font-size: 32px; line-height: 1.1; }
+    .reply { background: #faf7f2; padding: 12px 14px; }
+    .warn { background: #1c1917; color: #faf7f2; padding: 16px; }
+    .meta { color: #57534e; font-size: 14px; }
+    .accuracy { border-left: 3px solid #9a3412; padding-left: 12px; }
     ul { padding-left: 18px; }
     @media (max-width: 720px) {
-      .grid, .figures { grid-template-columns: 1fr; }
+      h1 { font-size: 34px; }
+      .grid, .figures, .steps { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <main>
-    <h1>Market Excuse Auditor</h1>
-    <p class="deck">Check a supplier’s reason for a price increase against the last invoice and a cited series.</p>
+    <h1>Did the market really cause this increase?</h1>
+    <p class="deck">A supplier says the material went up because of imports and freight. Paste the last invoice and today’s quote. This page shows how much of that increase a cited price series explains, and a reply you can send back.</p>
+
+    <section class="panel">
+      <h2>How to try it</h2>
+      <ol class="steps">
+        <li><b>Step 1</b>Keep the sample invoice, or paste your own last invoice on the left.</li>
+        <li><b>Step 2</b>Keep the sample quote, or paste today’s quote or WhatsApp message on the right.</li>
+        <li><b>Step 3</b>Press “Check the explanation.” Read the three numbers, then the reply.</li>
+      </ol>
+    </section>
+
+    <section class="panel accuracy">
+      <h2>How far the reasons can be trusted</h2>
+      <p>The arithmetic is exact for the prices on the page. The market reasons are only as good as the price series behind them. This demo uses a labeled sample series, not today’s mill price. Freight and currency count only when the supplier mentions them and the series has a value on both dates. A different grade or thickness stops the check. This does not forecast next month’s steel price.</p>
+    </section>
+
     <div class="grid">
       <div>
         <label for="invoice">Last invoice</label>
         <textarea id="invoice"></textarea>
+        <p class="hint">The earlier price for the same grade and size.</p>
       </div>
       <div>
         <label for="quote">Today’s quote or message</label>
         <textarea id="quote"></textarea>
+        <p class="hint">Include the new price and the reason the supplier gave.</p>
       </div>
     </div>
-    <label for="question">Optional follow-up</label>
-    <input id="question" placeholder="What do we reply?" />
+    <label for="question">Optional question</label>
+    <input id="question" placeholder="What do we reply to the supplier?" />
     <div class="actions">
       <button id="check" type="button">Check the explanation</button>
-      <button id="sample" class="secondary" type="button">Load the sample pair</button>
-      <button id="mismatch" class="secondary" type="button">Load a mismatched size</button>
-      <button id="whatsapp" class="secondary" type="button">Load the WhatsApp wording</button>
+      <button id="sample" class="secondary" type="button">See the worked example</button>
+      <button id="whatsapp" class="secondary" type="button">See a WhatsApp message</button>
+      <button id="mismatch" class="secondary" type="button">See a size that does not match</button>
     </div>
     <section id="out"></section>
   </main>
@@ -81,44 +108,62 @@
     const out = document.querySelector("#out");
     let samples = null;
 
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
     async function loadSamples() {
       samples = await fetch("/api/samples").then((response) => response.json());
       invoice.value = samples.invoice;
       quote.value = samples.quote;
     }
 
-    function figure(title, value) {
-      return `<div><span>${title}</span><b>${value}</b></div>`;
+    function figure(title, caption, value) {
+      return `<div><span>${title}</span><b>${escapeHtml(value)}</b><span>${caption}</span></div>`;
     }
 
     function render(audit) {
       if (!audit.comparable) {
-        out.innerHTML = `<div class="warn"><strong>Not comparable.</strong> ${audit.comparison_note}</div>`;
+        out.innerHTML = `<div class="warn"><h2>Stop. Do not compare these prices.</h2><p>${escapeHtml(audit.verdict)} ${escapeHtml(audit.comparison_note)}</p></div>`;
+        out.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
       const rows = audit.components.map((item) => {
         if (item.used) {
-          return `<li>${item.name}: ${item.change} (${item.start} to ${item.end} ${item.unit}). ${item.source}.</li>`;
+          return `<li>${escapeHtml(item.name)}: ${escapeHtml(item.change)}, from ${escapeHtml(item.start)} to ${escapeHtml(item.end)} ${escapeHtml(item.unit)}. ${escapeHtml(item.source)}.</li>`;
         }
-        return `<li>${item.name}: ${item.unused_reason}</li>`;
+        return `<li>${escapeHtml(item.name)}: ${escapeHtml(item.unused_reason)}</li>`;
       }).join("");
+      const follow = audit.follow_up
+        ? `<p><strong>Answer to your question.</strong> ${escapeHtml(audit.follow_up)}</p>`
+        : "";
       out.innerHTML = `
         <div class="result">
+          <p class="verdict">${escapeHtml(audit.verdict)}</p>
           <div class="figures">
-            ${figure("Quote increase", audit.quote_change)}
-            ${figure("Explained", audit.explained)}
-            ${figure("Unexplained", audit.unexplained)}
+            ${figure("Supplier asked for", "Change from the last invoice", audit.quote_change)}
+            ${figure("Market explains", "Index, and freight or currency only if cited", audit.explained)}
+            ${figure("Still unexplained", "The part the reason does not cover", audit.unexplained)}
           </div>
-          <p class="note">${audit.note}</p>
-          ${audit.follow_up ? `<p><strong>Follow-up.</strong> ${audit.follow_up}</p>` : ""}
-          <p class="meta">Supplier reason: ${audit.reason || "none stated"}</p>
+          <div class="reply">
+            <strong>Reply you can send.</strong>
+            <p>We can accept ${escapeHtml(audit.currency)} ${escapeHtml(audit.fair_unit_price)} per ${escapeHtml(audit.unit)}. That is the last price plus only the explained ${escapeHtml(audit.explained)}.</p>
+          </div>
+          <p>${escapeHtml(audit.note)}</p>
+          ${follow}
+          <p class="meta">Supplier’s words: ${escapeHtml(audit.reason || "none stated")}</p>
           <ul>${rows}</ul>
-          <p class="meta">Mode: ${audit.model_mode}. ${audit.series_label}</p>
+          <p class="meta">${escapeHtml(audit.series_label)} Calculation mode: ${escapeHtml(audit.model_mode)}.</p>
         </div>`;
+      out.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     document.querySelector("#check").addEventListener("click", async () => {
-      out.innerHTML = "<p>Checking the documents.</p>";
+      out.innerHTML = "<p>Checking the two documents.</p>";
       const response = await fetch("/api/audits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,24 +175,29 @@
       });
       const body = await response.json();
       if (!response.ok) {
-        out.innerHTML = `<div class="warn">${body.detail}</div>`;
+        const detail = Array.isArray(body.detail) ? "Add both documents, then try again." : body.detail;
+        out.innerHTML = `<div class="warn">${escapeHtml(detail)}</div>`;
         return;
       }
       render(body);
     });
+
     document.querySelector("#sample").addEventListener("click", () => {
       invoice.value = samples.invoice;
       quote.value = samples.quote;
+      question.value = "";
     });
     document.querySelector("#mismatch").addEventListener("click", () => {
       invoice.value = samples.invoice;
       quote.value = samples.quote_mismatch;
+      question.value = "";
     });
     document.querySelector("#whatsapp").addEventListener("click", () => {
       invoice.value = samples.invoice;
       quote.value = samples.whatsapp;
+      question.value = "";
     });
-    loadSamples();
+    loadSamples().then(() => document.querySelector("#check").click());
   </script>
 </body>
 </html>
