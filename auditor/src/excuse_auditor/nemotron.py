@@ -1,11 +1,12 @@
 import json
 import os
+from urllib import error as urlerror
 from urllib import request
-from urllib.error import URLError
 
 NANO_MODEL = "nvidia/nemotron-3-nano-30b-a3b"
 SUPER_MODEL = "nvidia/nemotron-3-super-120b-a12b"
 DEFAULT_BASE = "https://api.tokenfactory.us-central1.nebius.com/v1/"
+_MAX_PROMPT_CHARS = 40_000
 
 _EXTRACT_SCHEMA = {
     "supplier": "string",
@@ -27,11 +28,12 @@ def token_factory_configured() -> bool:
 def extract_with_nano(text: str) -> dict[str, str] | None:
     if not token_factory_configured():
         return None
+    clipped = text[:_MAX_PROMPT_CHARS]
     prompt = (
         "Extract one commercial document as JSON with exactly these keys: "
         f"{json.dumps(_EXTRACT_SCHEMA)}. Use an empty string when a value is absent. "
         "Do not invent prices. Document:\n"
-        f"{text}"
+        f"{clipped}"
     )
     raw = _complete(NANO_MODEL, prompt)
     if raw is None:
@@ -42,10 +44,12 @@ def extract_with_nano(text: str) -> dict[str, str] | None:
 def write_with_super(calculated_note: str, question: str) -> str | None:
     if not token_factory_configured():
         return None
+    note = calculated_note[:_MAX_PROMPT_CHARS]
+    asked = question[:4_000]
     prompt = (
         "You are writing for a buying desk. Use only the figures in the audit note. "
         "Do not introduce a new percentage, price, or cause. "
-        f"Audit note:\n{calculated_note}\n\nQuestion:\n{question}"
+        f"Audit note:\n{note}\n\nQuestion:\n{asked}"
     )
     return _complete(SUPER_MODEL, prompt)
 
@@ -69,7 +73,7 @@ def _complete(model: str, prompt: str) -> str | None:
     try:
         with request.urlopen(req, timeout=60) as response:
             body = json.loads(response.read().decode())
-    except (URLError, TimeoutError, json.JSONDecodeError, KeyError):
+    except (urlerror.URLError, urlerror.HTTPError, TimeoutError, json.JSONDecodeError, KeyError, OSError):
         return None
     try:
         return body["choices"][0]["message"]["content"]

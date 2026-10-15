@@ -1,5 +1,15 @@
 {
   "label": "Demonstration series shipped with the app. These are not live mill prices.",
+  "scope": {
+    "demo": true,
+    "live_feed": false,
+    "materials": ["steel"],
+    "limitations": [
+      "Checked-in demonstration indices only; replace with a series the business trusts before negotiation use.",
+      "Explained move sums selected component percentage changes; it is not a cost model of the mill.",
+      "Shipped live demo coverage is steel (CR sheet sample). The calculation core accepts other materials when you load a matching series file."
+    ]
+  },
   "steel": {
     "name": "Sample CR sheet index",
     "source": "Checked-in demonstration series",

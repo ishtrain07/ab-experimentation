@@ -3,110 +3,788 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Check whether a supplier’s market explanation accounts for a price increase." />
   <title>Market Excuse Auditor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root { color-scheme: light; }
+    :root {
+      color-scheme: light;
+      --ink: #0f1c24;
+      --ink-soft: #2f404c;
+      --muted: #4d5f6c;
+      --line: #c9d5de;
+      --line-strong: #a8b8c4;
+      --paper: #eef3f6;
+      --surface: #ffffff;
+      --surface-2: #e4ebf0;
+      --teal: #0f766e;
+      --teal-deep: #0a5c56;
+      --teal-soft: #d7efec;
+      --amber: #b45309;
+      --amber-soft: #fff1df;
+      --danger: #9f1239;
+      --danger-soft: #ffe4ea;
+      --ok: #047857;
+      --ok-soft: #dcfce7;
+      --shadow: 0 1px 0 rgba(15, 28, 36, 0.04), 0 12px 32px rgba(15, 28, 36, 0.06);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --font: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+      --mono: "IBM Plex Mono", "Cascadia Code", ui-monospace, monospace;
+      --focus: 0 0 0 3px rgba(15, 118, 110, 0.28);
+    }
+
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      background: #f6f3ee;
-      color: #1c1917;
-      font: 17px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      min-height: 100vh;
+      color: var(--ink);
+      font: 16px/1.5 var(--font);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #d9f3ef 0%, transparent 55%),
+        radial-gradient(900px 420px at 100% 0%, #e7eef8 0%, transparent 50%),
+        linear-gradient(180deg, #eef3f6 0%, var(--paper) 40%, #e9eef2 100%);
     }
-    main { max-width: 960px; margin: 0 auto; padding: 28px 20px 72px; }
-    h1 { font-size: 42px; line-height: 0.95; margin: 0 0 10px; }
-    h2 { font-size: 22px; margin: 0 0 8px; }
-    .deck { margin: 0 0 18px; font-size: 20px; }
-    .panel { background: #fff; padding: 16px 18px; margin: 0 0 16px; }
-    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0; padding: 0; list-style: none; }
-    .steps li { background: #faf7f2; padding: 12px; }
-    .steps b { display: block; color: #9a3412; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    label { display: block; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
-    .hint { margin: 4px 0 0; color: #57534e; font-size: 14px; }
-    textarea, input {
-      width: 100%;
-      border: 1px solid #d6d3d1;
-      background: #fff;
-      color: inherit;
-      font: 14px/1.4 ui-monospace, "Cascadia Code", monospace;
-      padding: 10px;
+
+    a { color: var(--teal-deep); }
+    button, input, textarea { font: inherit; }
+
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 20px 0 64px;
     }
-    textarea { min-height: 180px; resize: vertical; }
-    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
-    button {
-      border: 0;
-      background: #9a3412;
-      color: #fff;
-      font: 16px/1 "Iowan Old Style", Palatino, serif;
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background:
+        linear-gradient(145deg, #14b8a6 0%, var(--teal) 55%, #0b4f4a 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+      flex: none;
+      position: relative;
+    }
+
+    .mark::after {
+      content: "";
+      position: absolute;
+      inset: 11px 10px 11px 18px;
+      border-left: 2.5px solid rgba(255,255,255,0.92);
+      border-bottom: 2.5px solid rgba(255,255,255,0.92);
+      transform: skewX(-12deg);
+    }
+
+    .brand-copy { min-width: 0; }
+    .brand-copy strong {
+      display: block;
+      font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .brand-copy span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 2px;
+    }
+
+    .mode-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--amber-soft);
+      color: var(--amber);
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: 1px solid #f3d5a8;
+      white-space: nowrap;
+    }
+    .mode-pill i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--amber);
+      display: inline-block;
+    }
+
+    .hero {
+      margin: 0 0 22px;
+      animation: rise 0.55s ease both;
+    }
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.85rem, 4.2vw, 2.75rem);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      font-weight: 700;
+      max-width: 16ch;
+    }
+    .hero p {
+      margin: 0;
+      max-width: 54ch;
+      color: var(--ink-soft);
+      font-size: 1.05rem;
+    }
+
+    .banner {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
       padding: 12px 14px;
+      margin: 0 0 18px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(90deg, #fff6e5, #fff);
+      border: 1px solid #e8c48a;
+      color: #6b3b06;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      animation: rise 0.55s ease 0.05s both;
+    }
+    .banner strong { color: #7a4205; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .work {
+      padding: 18px;
+      animation: rise 0.55s ease 0.08s both;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 0 0 18px;
+      padding: 0;
+      list-style: none;
+    }
+    .steps li {
+      position: relative;
+      padding: 12px 12px 12px 14px;
+      border-radius: 12px;
+      background: var(--surface-2);
+      border: 1px solid transparent;
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    }
+    .steps li[data-active="true"] {
+      background: var(--teal-soft);
+      border-color: #9fd5cf;
+      transform: translateY(-1px);
+    }
+    .steps b {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+    .steps span {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+      line-height: 1.35;
+    }
+
+    .scenarios {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 16px;
+    }
+    .scenario {
+      appearance: none;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--ink-soft);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      font-weight: 550;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+    .scenario:hover { border-color: var(--teal); color: var(--teal-deep); }
+    .scenario[aria-pressed="true"] {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+    .scenario:focus-visible,
+    .primary:focus-visible,
+    .ghost:focus-visible,
+    .icon-btn:focus-visible,
+    textarea:focus-visible,
+    input:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    .docs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .field label em {
+      font-style: normal;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.78rem;
+    }
+    .field .hint {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: #fbfcfd;
+      color: var(--ink);
+      padding: 12px 12px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    textarea {
+      min-height: 210px;
+      resize: vertical;
+      font: 13px/1.45 var(--mono);
+    }
+    input[type="text"] {
+      font-size: 0.95rem;
+    }
+    textarea:hover, input[type="text"]:hover { border-color: #8aa0ae; }
+    textarea:focus, input[type="text"]:focus {
+      border-color: var(--teal);
+      background: #fff;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+      align-items: center;
+    }
+    .primary {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #149286 0%, var(--teal) 100%);
+      color: #fff;
+      font-weight: 650;
+      padding: 12px 18px;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(15, 118, 110, 0.22);
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+    .primary:hover { filter: brightness(1.05); }
+    .primary:active { transform: translateY(1px); }
+    .primary[disabled] {
+      opacity: 0.65;
+      cursor: wait;
+      box-shadow: none;
+    }
+    .ghost {
+      appearance: none;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--ink-soft);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 550;
       cursor: pointer;
     }
-    button.secondary { background: #44403c; }
-    .result { background: #fff; border-top: 4px solid #9a3412; padding: 18px; }
-    .verdict { font-size: 26px; line-height: 1.2; margin: 0 0 12px; }
-    .figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
-    .figures div { background: #faf7f2; padding: 12px; }
-    .figures span { display: block; color: #57534e; font-size: 14px; }
-    .figures b { display: block; font-size: 32px; line-height: 1.1; }
-    .reply { background: #faf7f2; padding: 12px 14px; }
-    .warn { background: #1c1917; color: #faf7f2; padding: 16px; }
-    .meta { color: #57534e; font-size: 14px; }
-    .accuracy { border-left: 3px solid #9a3412; padding-left: 12px; }
-    ul { padding-left: 18px; }
+    .ghost:hover { border-color: var(--teal); color: var(--teal-deep); }
+
+    .status-line {
+      margin: 12px 0 0;
+      min-height: 1.25em;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .aside {
+      display: grid;
+      gap: 14px;
+      animation: rise 0.55s ease 0.12s both;
+    }
+    .aside .panel { padding: 16px; }
+    .aside h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+    .aside p, .aside li {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 0.92rem;
+    }
+    .aside ul {
+      margin: 8px 0 0;
+      padding-left: 1.1rem;
+      display: grid;
+      gap: 6px;
+    }
+    .trust-list li::marker { color: var(--teal); }
+
+    .result-wrap {
+      margin-top: 18px;
+      grid-column: 1 / -1;
+    }
+
+    .result {
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: rise 0.45s ease both;
+    }
+    .result.mismatch {
+      border-color: #f0b4c4;
+      background: linear-gradient(180deg, #fff7f9 0%, #fff 40%);
+    }
+
+    .result-head {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+    .result-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal-deep);
+      background: var(--teal-soft);
+      border-radius: 999px;
+      padding: 5px 10px;
+    }
+    .result.mismatch .result-kicker {
+      color: var(--danger);
+      background: var(--danger-soft);
+    }
+    .verdict {
+      margin: 0;
+      font-size: clamp(1.25rem, 2.6vw, 1.7rem);
+      line-height: 1.25;
+      letter-spacing: -0.03em;
+      font-weight: 700;
+      max-width: 40ch;
+    }
+
+    .figures {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 16px 18px 8px;
+    }
+    .figure {
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--surface-2);
+      border: 1px solid transparent;
+    }
+    .figure.ask { border-color: #c9d5de; }
+    .figure.explained {
+      background: var(--ok-soft);
+      border-color: #a7e3c4;
+    }
+    .figure.gap {
+      background: var(--amber-soft);
+      border-color: #f0d2a4;
+    }
+    .figure .label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .figure .value {
+      display: block;
+      font-size: clamp(1.55rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .figure .caption {
+      display: block;
+      margin-top: 8px;
+      color: var(--ink-soft);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .split-bar {
+      margin: 4px 18px 16px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #f7fafb;
+      border: 1px solid var(--line);
+    }
+    .split-bar .bar-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .bar-track {
+      display: flex;
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e4ebf0;
+    }
+    .bar-explained {
+      background: linear-gradient(90deg, #34d399, #059669);
+      width: 0;
+      transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .bar-gap {
+      background: linear-gradient(90deg, #fbbf24, #d97706);
+      width: 0;
+      transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.08s;
+    }
+
+    .reply {
+      margin: 0 18px 16px;
+      padding: 14px 14px 12px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #f4fbfa, #eef8f6);
+      border: 1px solid #b7ddd8;
+    }
+    .reply-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .reply-top strong { font-size: 0.95rem; }
+    .reply p {
+      margin: 0;
+      color: var(--ink);
+      font-size: 0.98rem;
+      line-height: 1.45;
+    }
+    .icon-btn {
+      appearance: none;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: var(--ink-soft);
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .icon-btn:hover { border-color: var(--teal); color: var(--teal-deep); }
+    .icon-btn[data-copied="true"] {
+      border-color: #86d4b0;
+      color: var(--ok);
+      background: var(--ok-soft);
+    }
+
+    .result-body {
+      padding: 0 18px 18px;
+      display: grid;
+      gap: 12px;
+    }
+    .note, .follow, .reason, .components, .meta-row {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 0.92rem;
+    }
+    .follow {
+      padding: 12px;
+      border-radius: 10px;
+      background: #f5f8fa;
+      border: 1px solid var(--line);
+    }
+    .components {
+      margin: 0;
+      padding-left: 1.15rem;
+      display: grid;
+      gap: 6px;
+    }
+    .components li.used { color: var(--ink); }
+    .components li.unused { color: var(--muted); }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      padding-top: 4px;
+      border-top: 1px solid var(--line);
+      font-size: 0.82rem;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--ink-soft);
+      font-weight: 600;
+    }
+    .share-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .empty-state {
+      padding: 28px 18px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.55);
+    }
+    .empty-state strong {
+      display: block;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+      font-size: 1rem;
+    }
+
+    .warn-box {
+      padding: 18px;
+    }
+    .warn-box h2 {
+      margin: 0 0 8px;
+      color: var(--danger);
+      letter-spacing: -0.02em;
+    }
+    .warn-box p { margin: 0; color: var(--ink-soft); }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .aside { grid-template-columns: 1fr 1fr; }
+    }
     @media (max-width: 720px) {
-      h1 { font-size: 34px; }
-      .grid, .figures, .steps { grid-template-columns: 1fr; }
+      .shell { width: min(100% - 20px, 1120px); padding-top: 14px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .steps, .docs, .figures, .aside { grid-template-columns: 1fr; }
+      .hero h1 { max-width: none; }
+      .reply-top { align-items: flex-start; flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      html { scroll-behavior: auto; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Did the market really cause this increase?</h1>
-    <p class="deck">A supplier says the material went up because of imports and freight. Paste the last invoice and today’s quote. This page shows how much of that increase a cited price series explains, and a reply you can send back.</p>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"></div>
+        <div class="brand-copy">
+          <strong>Market Excuse Auditor</strong>
+          <span>Buying-desk check for supplier price stories</span>
+        </div>
+      </div>
+      <div class="mode-pill" id="demoBadge" title="Price series in this demo are synthetic">
+        <i aria-hidden="true"></i>
+        Demo series · not live mill data
+      </div>
+    </header>
 
-    <section class="panel">
-      <h2>How to try it</h2>
-      <ol class="steps">
-        <li><b>Step 1</b>Keep the sample invoice, or paste your own last invoice on the left.</li>
-        <li><b>Step 2</b>Keep the sample quote, or paste today’s quote or WhatsApp message on the right.</li>
-        <li><b>Step 3</b>Press “Check the explanation.” Read the three numbers, then the reply.</li>
-      </ol>
+    <section class="hero">
+      <h1>Did the market really cause this increase?</h1>
+      <p>
+        Paste the last invoice and today’s quote. See how much of the jump a cited price series explains,
+        then copy a reply you can send back.
+      </p>
     </section>
 
-    <section class="panel accuracy">
-      <h2>How far the reasons can be trusted</h2>
-      <p>The arithmetic is exact for the prices on the page. The market reasons are only as good as the price series behind them. This demo uses a labeled sample series, not today’s mill price. Freight and currency count only when the supplier mentions them and the series has a value on both dates. A different grade or thickness stops the check. This does not forecast next month’s steel price.</p>
-    </section>
+    <div class="banner" role="status">
+      <div>
+        <strong>Honest demo label.</strong>
+        The checked-in sample series is synthetic for walkthroughs. It is not today’s mill price.
+        Replace it with a series your business trusts before using numbers in a real negotiation.
+        <span id="seriesHint"></span>
+      </div>
+    </div>
 
-    <div class="grid">
-      <div>
-        <label for="invoice">Last invoice</label>
-        <textarea id="invoice"></textarea>
-        <p class="hint">The earlier price for the same grade and size.</p>
-      </div>
-      <div>
-        <label for="quote">Today’s quote or message</label>
-        <textarea id="quote"></textarea>
-        <p class="hint">Include the new price and the reason the supplier gave.</p>
+    <div class="layout">
+      <section class="panel work" aria-labelledby="work-title">
+        <h2 id="work-title" class="sr-only">Audit workspace</h2>
+
+        <ol class="steps" aria-label="How to use">
+          <li data-step="1" data-active="true">
+            <b>Step 1</b>
+            <span>Load a sample or paste your last invoice.</span>
+          </li>
+          <li data-step="2" data-active="true">
+            <b>Step 2</b>
+            <span>Add today’s quote or WhatsApp message.</span>
+          </li>
+          <li data-step="3" data-active="false">
+            <b>Step 3</b>
+            <span>Check the explanation and copy the reply.</span>
+          </li>
+        </ol>
+
+        <div class="scenarios" role="group" aria-label="Demo scenarios">
+          <button type="button" class="scenario" id="sample" aria-pressed="true">Worked example</button>
+          <button type="button" class="scenario" id="whatsapp" aria-pressed="false">WhatsApp wording</button>
+          <button type="button" class="scenario" id="mismatch" aria-pressed="false">Size mismatch</button>
+        </div>
+
+        <div class="docs">
+          <div class="field">
+            <label for="invoice">Last invoice <em>earlier price</em></label>
+            <textarea id="invoice" spellcheck="false" aria-describedby="invoice-hint"></textarea>
+            <p class="hint" id="invoice-hint">Same grade and size as the new quote.</p>
+          </div>
+          <div class="field">
+            <label for="quote">Today’s quote or message <em>new price + reason</em></label>
+            <textarea id="quote" spellcheck="false" aria-describedby="quote-hint"></textarea>
+            <p class="hint" id="quote-hint">Include the supplier’s stated market reason.</p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="question">Optional question <em>for the follow-up answer</em></label>
+          <input id="question" type="text" placeholder="What do we reply to the supplier?" autocomplete="off" />
+        </div>
+
+        <div class="actions">
+          <button id="check" class="primary" type="button">Check the explanation</button>
+          <button id="clear" class="ghost" type="button">Clear inputs</button>
+        </div>
+        <p class="status-line" id="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <aside class="aside" aria-label="Trust and accuracy">
+        <section class="panel">
+          <h2>How far to trust this</h2>
+          <p>Arithmetic on the prices you paste is exact. Market reasons are only as good as the series behind them.</p>
+          <ul class="trust-list">
+            <li>This demo uses a labeled synthetic series, not live mill data.</li>
+            <li>Freight and currency count only when the supplier mentions them and both dates have values.</li>
+            <li>A different grade or thickness stops the comparison.</li>
+            <li>This does not forecast next month’s steel price.</li>
+          </ul>
+        </section>
+        <section class="panel">
+          <h2>What you get</h2>
+          <ul class="trust-list">
+            <li>Supplier ask vs explained move vs gap</li>
+            <li>A fair unit price you can accept</li>
+            <li>A reply you can copy or share</li>
+          </ul>
+        </section>
+      </aside>
+
+      <div class="result-wrap" id="out" aria-live="polite">
+        <div class="empty-state">
+          <strong>Results land here</strong>
+          Load a sample, then press Check the explanation.
+        </div>
       </div>
     </div>
-    <label for="question">Optional question</label>
-    <input id="question" placeholder="What do we reply to the supplier?" />
-    <div class="actions">
-      <button id="check" type="button">Check the explanation</button>
-      <button id="sample" class="secondary" type="button">See the worked example</button>
-      <button id="whatsapp" class="secondary" type="button">See a WhatsApp message</button>
-      <button id="mismatch" class="secondary" type="button">See a size that does not match</button>
-    </div>
-    <section id="out"></section>
-  </main>
+  </div>
+
   <script>
     const invoice = document.querySelector("#invoice");
     const quote = document.querySelector("#quote");
     const question = document.querySelector("#question");
     const out = document.querySelector("#out");
+    const status = document.querySelector("#status");
+    const seriesHint = document.querySelector("#seriesHint");
+    const checkBtn = document.querySelector("#check");
+    const stepNodes = document.querySelectorAll(".steps li");
+    const scenarioBtns = {
+      sample: document.querySelector("#sample"),
+      whatsapp: document.querySelector("#whatsapp"),
+      mismatch: document.querySelector("#mismatch"),
+    };
+
     let samples = null;
+    let lastAudit = null;
+    let lastSummary = "";
+    let activeScenario = "sample";
 
     function escapeHtml(value) {
       return String(value)
@@ -116,88 +794,317 @@
         .replaceAll('"', "&quot;");
     }
 
+    function parsePct(value) {
+      if (value == null) return null;
+      const match = String(value).replace(",", "").match(/-?\d+(\.\d+)?/);
+      return match ? Number(match[0]) : null;
+    }
+
+    function setStep(active) {
+      stepNodes.forEach((node) => {
+        const step = Number(node.dataset.step);
+        node.dataset.active = String(step <= active);
+      });
+    }
+
+    function setScenario(name) {
+      activeScenario = name;
+      Object.entries(scenarioBtns).forEach(([key, btn]) => {
+        btn.setAttribute("aria-pressed", String(key === name));
+      });
+    }
+
+    function updateInputSteps() {
+      const filled = Boolean(invoice.value.trim() && quote.value.trim());
+      setStep(filled ? 2 : 1);
+    }
+
     async function loadSamples() {
       samples = await fetch("/api/samples").then((response) => response.json());
+      if (samples.series_label) {
+        seriesHint.textContent = " Current label: " + samples.series_label;
+      }
+      applyScenario("sample", { autoCheck: true, scroll: false });
+    }
+
+    function applyScenario(name, { autoCheck = false, scroll = true } = {}) {
+      if (!samples) return;
+      setScenario(name);
       invoice.value = samples.invoice;
-      quote.value = samples.quote;
+      question.value = "";
+      if (name === "whatsapp") quote.value = samples.whatsapp;
+      else if (name === "mismatch") quote.value = samples.quote_mismatch;
+      else quote.value = samples.quote;
+      updateInputSteps();
+      status.textContent = name === "mismatch"
+        ? "Loaded a size mismatch example."
+        : name === "whatsapp"
+          ? "Loaded WhatsApp-style wording."
+          : "Loaded the worked example.";
+      if (autoCheck) runAudit({ scroll });
     }
 
-    function figure(title, caption, value) {
-      return `<div><span>${title}</span><b>${escapeHtml(value)}</b><span>${caption}</span></div>`;
+    function figure(kind, title, caption, value) {
+      return `
+        <div class="figure ${kind}">
+          <span class="label">${title}</span>
+          <span class="value">${escapeHtml(value)}</span>
+          <span class="caption">${caption}</span>
+        </div>`;
     }
 
-    function render(audit) {
+    function buildSummary(audit) {
       if (!audit.comparable) {
-        out.innerHTML = `<div class="warn"><h2>Stop. Do not compare these prices.</h2><p>${escapeHtml(audit.verdict)} ${escapeHtml(audit.comparison_note)}</p></div>`;
-        out.scrollIntoView({ behavior: "smooth", block: "start" });
+        return `Stop. Do not compare these prices.\n${audit.verdict}\n${audit.comparison_note}\n${audit.series_label}`;
+      }
+      const lines = [
+        audit.verdict,
+        `Confidence: ${audit.trust?.confidence || "not reported"}`,
+        `Supplier asked for: ${audit.quote_change}`,
+        `Market explains: ${audit.explained}`,
+        `Still unexplained: ${audit.unexplained}`,
+        `Fair unit price: ${audit.currency} ${audit.fair_unit_price} per ${audit.unit}`,
+        audit.note,
+        `Series: ${audit.series_label}`,
+        `Mode: ${audit.model_mode}`,
+      ];
+      if (audit.follow_up) lines.push(`Follow-up: ${audit.follow_up}`);
+      return lines.join("\n");
+    }
+
+    function wireCopyButtons(root, audit) {
+      const replyBtn = root.querySelector("[data-copy='reply']");
+      const allBtn = root.querySelector("[data-copy='all']");
+      const shareBtn = root.querySelector("[data-share]");
+
+      async function flash(btn, okText) {
+        const original = btn.textContent;
+        btn.dataset.copied = "true";
+        btn.textContent = okText;
+        setTimeout(() => {
+          btn.dataset.copied = "false";
+          btn.textContent = original;
+        }, 1600);
+      }
+
+      async function copyText(text, btn, okText) {
+        try {
+          await navigator.clipboard.writeText(text);
+          await flash(btn, okText);
+          status.textContent = "Copied to clipboard.";
+        } catch {
+          status.textContent = "Could not copy. Select the text manually.";
+        }
+      }
+
+      if (replyBtn) {
+        const replyText = audit.comparable
+          ? `We can accept ${audit.currency} ${audit.fair_unit_price} per ${audit.unit}. That is the last price plus only the explained ${audit.explained}.`
+          : `${audit.verdict} ${audit.comparison_note}`;
+        replyBtn.addEventListener("click", () => copyText(replyText, replyBtn, "Copied"));
+      }
+      if (allBtn) {
+        allBtn.addEventListener("click", () => copyText(lastSummary, allBtn, "Copied"));
+      }
+      if (shareBtn) {
+        if (!navigator.share) {
+          shareBtn.hidden = true;
+        } else {
+          shareBtn.addEventListener("click", async () => {
+            try {
+              await navigator.share({
+                title: "Market Excuse Auditor",
+                text: lastSummary,
+              });
+              status.textContent = "Share sheet opened.";
+            } catch {
+              /* user cancelled */
+            }
+          });
+        }
+      }
+    }
+
+    function render(audit, { scroll = true } = {}) {
+      lastAudit = audit;
+      lastSummary = buildSummary(audit);
+      setStep(3);
+
+      if (!audit.comparable) {
+        out.innerHTML = `
+          <article class="result mismatch">
+            <div class="warn-box">
+              <div class="result-kicker">Not comparable</div>
+              <h2>Stop. Do not compare these prices.</h2>
+              <p>${escapeHtml(audit.verdict)} ${escapeHtml(audit.comparison_note)}</p>
+              <div class="share-row" style="margin-top:14px">
+                <button type="button" class="icon-btn" data-copy="reply">Copy warning</button>
+                <button type="button" class="icon-btn" data-copy="all">Copy details</button>
+                <button type="button" class="icon-btn" data-share>Share</button>
+              </div>
+              <p class="meta-row" style="margin-top:14px;border:0;padding:0">
+                <span class="chip">${escapeHtml(audit.series_label)}</span>
+                <span class="chip">Mode: ${escapeHtml(audit.model_mode)}</span>
+              </p>
+            </div>
+          </article>`;
+        wireCopyButtons(out, audit);
+        if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
+
+      const ask = parsePct(audit.quote_change) || 0;
+      const explained = Math.max(0, parsePct(audit.explained) || 0);
+      const gap = Math.max(0, parsePct(audit.unexplained) || 0);
+      const base = ask > 0 ? ask : explained + gap || 1;
+      const explainedWidth = Math.min(100, (explained / base) * 100);
+      const gapWidth = Math.min(100 - explainedWidth, (gap / base) * 100);
+
       const rows = audit.components.map((item) => {
         if (item.used) {
-          return `<li>${escapeHtml(item.name)}: ${escapeHtml(item.change)}, from ${escapeHtml(item.start)} to ${escapeHtml(item.end)} ${escapeHtml(item.unit)}. ${escapeHtml(item.source)}.</li>`;
+          return `<li class="used"><strong>${escapeHtml(item.name)}</strong>: ${escapeHtml(item.change)}, from ${escapeHtml(item.start)} to ${escapeHtml(item.end)} ${escapeHtml(item.unit)}. ${escapeHtml(item.source)}.</li>`;
         }
-        return `<li>${escapeHtml(item.name)}: ${escapeHtml(item.unused_reason)}</li>`;
+        return `<li class="unused"><strong>${escapeHtml(item.name)}</strong>: ${escapeHtml(item.unused_reason)}</li>`;
       }).join("");
+      const trustReasons = (audit.trust?.confidence_reasons || [])
+        .map((reason) => `<li>${escapeHtml(reason)}</li>`)
+        .join("");
+      const limitations = (audit.trust?.limitations || [])
+        .map((limitation) => `<li>${escapeHtml(limitation)}</li>`)
+        .join("");
+      const trustDetail = audit.trust ? `
+        <details>
+          <summary><strong>Why confidence is ${escapeHtml(audit.trust.confidence)}</strong></summary>
+          ${trustReasons ? `<ul class="components">${trustReasons}</ul>` : ""}
+          ${limitations ? `<p class="meta-row" style="border:0"><strong>Limits</strong></p><ul class="components">${limitations}</ul>` : ""}
+        </details>` : "";
+
       const follow = audit.follow_up
-        ? `<p><strong>Answer to your question.</strong> ${escapeHtml(audit.follow_up)}</p>`
+        ? `<div class="follow"><strong>Answer to your question.</strong> ${escapeHtml(audit.follow_up)}</div>`
         : "";
+
       out.innerHTML = `
-        <div class="result">
-          <p class="verdict">${escapeHtml(audit.verdict)}</p>
+        <article class="result">
+          <div class="result-head">
+            <div class="result-kicker">Audit result</div>
+            <p class="verdict">${escapeHtml(audit.verdict)}</p>
+          </div>
           <div class="figures">
-            ${figure("Supplier asked for", "Change from the last invoice", audit.quote_change)}
-            ${figure("Market explains", "Index, and freight or currency only if cited", audit.explained)}
-            ${figure("Still unexplained", "The part the reason does not cover", audit.unexplained)}
+            ${figure("ask", "Supplier asked for", "Change from the last invoice", audit.quote_change)}
+            ${figure("explained", "Market explains", "Index, plus freight or currency only if cited", audit.explained)}
+            ${figure("gap", "Still unexplained", "The part the reason does not cover", audit.unexplained)}
+          </div>
+          <div class="split-bar" aria-hidden="true">
+            <div class="bar-meta">
+              <span>Explained share of the ask</span>
+              <span>${escapeHtml(audit.explained)} explained · ${escapeHtml(audit.unexplained)} gap</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-explained" data-width="${explainedWidth}"></div>
+              <div class="bar-gap" data-width="${gapWidth}"></div>
+            </div>
           </div>
           <div class="reply">
-            <strong>Reply you can send.</strong>
+            <div class="reply-top">
+              <strong>Reply you can send</strong>
+              <div class="share-row">
+                <button type="button" class="icon-btn" data-copy="reply">Copy reply</button>
+                <button type="button" class="icon-btn" data-copy="all">Copy full result</button>
+                <button type="button" class="icon-btn" data-share>Share</button>
+              </div>
+            </div>
             <p>We can accept ${escapeHtml(audit.currency)} ${escapeHtml(audit.fair_unit_price)} per ${escapeHtml(audit.unit)}. That is the last price plus only the explained ${escapeHtml(audit.explained)}.</p>
           </div>
-          <p>${escapeHtml(audit.note)}</p>
-          ${follow}
-          <p class="meta">Supplier’s words: ${escapeHtml(audit.reason || "none stated")}</p>
-          <ul>${rows}</ul>
-          <p class="meta">${escapeHtml(audit.series_label)} Calculation mode: ${escapeHtml(audit.model_mode)}.</p>
-        </div>`;
-      out.scrollIntoView({ behavior: "smooth", block: "start" });
+          <div class="result-body">
+            <p class="note">${escapeHtml(audit.note)}</p>
+            ${follow}
+            <p class="reason"><strong>Supplier’s words:</strong> ${escapeHtml(audit.reason || "none stated")}</p>
+            <ul class="components">${rows}</ul>
+            ${trustDetail}
+            <div class="meta-row">
+              <span class="chip">${escapeHtml(audit.series_label)}</span>
+              <span class="chip">Confidence: ${escapeHtml(audit.trust?.confidence || "not reported")}</span>
+              <span class="chip">Scope: ${escapeHtml((audit.trust?.material_scope || ["configured sample"]).join(", "))}</span>
+              <span class="chip">Mode: ${escapeHtml(audit.model_mode)}</span>
+            </div>
+          </div>
+        </article>`;
+
+      wireCopyButtons(out, audit);
+      requestAnimationFrame(() => {
+        out.querySelectorAll("[data-width]").forEach((el) => {
+          el.style.width = `${el.dataset.width}%`;
+        });
+      });
+      if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    document.querySelector("#check").addEventListener("click", async () => {
-      out.innerHTML = "<p>Checking the two documents.</p>";
-      const response = await fetch("/api/audits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          invoice_text: invoice.value,
-          quote_text: quote.value,
-          question: question.value,
-        }),
-      });
-      const body = await response.json();
-      if (!response.ok) {
-        const detail = Array.isArray(body.detail) ? "Add both documents, then try again." : body.detail;
-        out.innerHTML = `<div class="warn">${escapeHtml(detail)}</div>`;
+    async function runAudit({ scroll = true } = {}) {
+      if (!invoice.value.trim() || !quote.value.trim()) {
+        status.textContent = "Add both documents, then try again.";
+        out.innerHTML = `<div class="empty-state"><strong>Missing input</strong>Paste an invoice and a quote first.</div>`;
         return;
       }
-      render(body);
+      checkBtn.disabled = true;
+      status.textContent = "Checking the two documents…";
+      out.innerHTML = `<div class="empty-state"><strong>Working</strong>Comparing the quote move to the cited series.</div>`;
+      try {
+        const response = await fetch("/api/audits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            invoice_text: invoice.value,
+            quote_text: quote.value,
+            question: question.value,
+          }),
+        });
+        const body = await response.json();
+        if (!response.ok) {
+          const detail = Array.isArray(body.detail)
+            ? "Add both documents, then try again."
+            : body.detail;
+          out.innerHTML = `<article class="result mismatch"><div class="warn-box"><h2>Could not run the audit</h2><p>${escapeHtml(detail)}</p></div></article>`;
+          status.textContent = "Fix the documents and try again.";
+          setStep(2);
+          return;
+        }
+        render(body, { scroll });
+        status.textContent = body.comparable
+          ? "Audit ready. Copy the reply if it looks right."
+          : "These documents are not comparable.";
+      } catch (error) {
+        out.innerHTML = `<article class="result mismatch"><div class="warn-box"><h2>Network error</h2><p>Could not reach the auditor API.</p></div></article>`;
+        status.textContent = "Request failed.";
+      } finally {
+        checkBtn.disabled = false;
+      }
+    }
+
+    checkBtn.addEventListener("click", () => runAudit({ scroll: true }));
+
+    document.querySelector("#clear").addEventListener("click", () => {
+      invoice.value = "";
+      quote.value = "";
+      question.value = "";
+      setScenario("");
+      Object.values(scenarioBtns).forEach((btn) => btn.setAttribute("aria-pressed", "false"));
+      updateInputSteps();
+      lastAudit = null;
+      lastSummary = "";
+      out.innerHTML = `<div class="empty-state"><strong>Inputs cleared</strong>Paste your documents or reload a demo scenario.</div>`;
+      status.textContent = "Inputs cleared.";
     });
 
-    document.querySelector("#sample").addEventListener("click", () => {
-      invoice.value = samples.invoice;
-      quote.value = samples.quote;
-      question.value = "";
+    scenarioBtns.sample.addEventListener("click", () => applyScenario("sample"));
+    scenarioBtns.whatsapp.addEventListener("click", () => applyScenario("whatsapp"));
+    scenarioBtns.mismatch.addEventListener("click", () => applyScenario("mismatch"));
+    invoice.addEventListener("input", updateInputSteps);
+    quote.addEventListener("input", updateInputSteps);
+
+    loadSamples().catch(() => {
+      status.textContent = "Could not load demo samples.";
+      out.innerHTML = `<div class="empty-state"><strong>Samples unavailable</strong>Paste an invoice and quote manually.</div>`;
     });
-    document.querySelector("#mismatch").addEventListener("click", () => {
-      invoice.value = samples.invoice;
-      quote.value = samples.quote_mismatch;
-      question.value = "";
-    });
-    document.querySelector("#whatsapp").addEventListener("click", () => {
-      invoice.value = samples.invoice;
-      quote.value = samples.whatsapp;
-      question.value = "";
-    });
-    loadSamples().then(() => document.querySelector("#check").click());
   </script>
 </body>
 </html>

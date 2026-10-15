@@ -8,7 +8,13 @@ This is a Best Apps and Agents project for the NVIDIA x Nebius hackathon. It use
 
 The supplier says the material is up 14% because of imports and freight. The sample series explain 8.3%. The unexplained gap is 5.7%. The reply offers the last price plus only the explained move.
 
-The series in `samples/series.json` is a demonstration file with its source printed on screen. It is not a live mill price. Replace it with a series the business already trusts before using the result in a real negotiation.
+## Material scope
+
+- **Shipped demo series:** steel (CR sheet sample index) plus optional freight and FX add-ons. Not a live mill feed.
+- **Calculation core:** material-agnostic. Any commodity works when the series JSON declares that material and the invoice/quote share grade, size, unit, and currency.
+- **API honesty:** `/api/audits` returns `trust` (confidence, limitations, `material_scope`, `series_demo`, `live_feed`). `/api/health` and `/api/samples` echo the loaded scope so the UI does not imply broad live coverage.
+
+Replace `samples/series.json` with a series the business already trusts before using the result in a real negotiation.
 
 ## Run
 

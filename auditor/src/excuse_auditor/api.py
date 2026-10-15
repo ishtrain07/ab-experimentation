@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .audit import run_audit
 from .extract import extract_document
@@ -14,18 +14,28 @@ ROOT = Path(__file__).resolve().parents[2]
 SAMPLES = ROOT / "samples"
 SERIES_PATH = SAMPLES / "series.json"
 STATIC = ROOT / "static" / "index.html"
+MAX_DOCUMENT_CHARS = 50_000
+MAX_QUESTION_CHARS = 4_000
 
 app = FastAPI(title="Market Excuse Auditor")
 
 
 class AuditRequest(BaseModel):
-    invoice_text: str = Field(min_length=1)
-    quote_text: str = Field(min_length=1)
-    question: str = ""
+    invoice_text: str = Field(min_length=1, max_length=MAX_DOCUMENT_CHARS)
+    quote_text: str = Field(min_length=1, max_length=MAX_DOCUMENT_CHARS)
+    question: str = Field(default="", max_length=MAX_QUESTION_CHARS)
+
+    @field_validator("invoice_text", "quote_text", "question")
+    @classmethod
+    def strip_nulls(cls, value: str) -> str:
+        if "\x00" in value:
+            raise ValueError("Null bytes are not allowed.")
+        return value
 
 
 class ComponentView(BaseModel):
     name: str
+    key: str
     change: str | None
     start: str
     end: str
@@ -33,6 +43,17 @@ class ComponentView(BaseModel):
     source: str
     used: bool
     unused_reason: str
+
+
+class TrustView(BaseModel):
+    confidence: str
+    confidence_reasons: list[str]
+    limitations: list[str]
+    material_scope: list[str]
+    series_demo: bool
+    live_feed: bool
+    extraction_invoice: str
+    extraction_quote: str
 
 
 class AuditView(BaseModel):
@@ -51,6 +72,7 @@ class AuditView(BaseModel):
     follow_up: str | None
     model_mode: str
     components: list[ComponentView]
+    trust: TrustView
 
 
 @app.get("/")
@@ -59,13 +81,20 @@ def index() -> FileResponse:
 
 
 @app.get("/api/samples")
-def samples() -> dict[str, str]:
+def samples() -> dict[str, object]:
+    from .series import load_series
+
+    series = load_series(SERIES_PATH)
     return {
         "invoice": (SAMPLES / "invoice.txt").read_text(),
         "quote": (SAMPLES / "quote.txt").read_text(),
         "quote_mismatch": (SAMPLES / "quote_mismatch.txt").read_text(),
         "whatsapp": (SAMPLES / "whatsapp.txt").read_text(),
-        "series_label": series_label(SERIES_PATH),
+        "series_label": series.label,
+        "material_scope": list(series.scope.materials),
+        "series_demo": series.scope.demo,
+        "live_feed": series.scope.live_feed,
+        "limitations": list(series.scope.limitations),
     }
 
 
@@ -73,7 +102,7 @@ def samples() -> dict[str, str]:
 def create_audit(body: AuditRequest) -> AuditView:
     invoice = _read(body.invoice_text, "invoice")
     quote = _read(body.quote_text, "quote")
-    result = run_audit(invoice, quote, SERIES_PATH, series_label(SERIES_PATH))
+    result = run_audit(invoice, quote, SERIES_PATH)
     note = write_note(invoice, quote, result)
     follow_up = None
     if body.question.strip() and result.comparable:
@@ -98,6 +127,7 @@ def create_audit(body: AuditRequest) -> AuditView:
         components=[
             ComponentView(
                 name=item.name,
+                key=item.key,
                 change=percent(item.change) if item.used else None,
                 start=str(item.start),
                 end=str(item.end),
@@ -108,6 +138,16 @@ def create_audit(body: AuditRequest) -> AuditView:
             )
             for item in result.components
         ],
+        trust=TrustView(
+            confidence=result.trust.confidence,
+            confidence_reasons=list(result.trust.confidence_reasons),
+            limitations=list(result.trust.limitations),
+            material_scope=list(result.trust.material_scope),
+            series_demo=result.trust.series_demo,
+            live_feed=result.trust.live_feed,
+            extraction_invoice=result.trust.extraction_invoice,
+            extraction_quote=result.trust.extraction_quote,
+        ),
     )
 
 
@@ -155,5 +195,14 @@ def _local_follow_up(question: str, note: str) -> str:
 
 
 @app.get("/api/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "model_mode": "token-factory" if token_factory_configured() else "local-calculation"}
+def health() -> dict[str, object]:
+    from .series import load_series
+
+    series = load_series(SERIES_PATH)
+    return {
+        "status": "ok",
+        "model_mode": "token-factory" if token_factory_configured() else "local-calculation",
+        "material_scope": list(series.scope.materials),
+        "series_demo": series.scope.demo,
+        "live_feed": series.scope.live_feed,
+    }
