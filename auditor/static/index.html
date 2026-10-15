@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Market Excuse Auditor</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f6f3ee;
+      color: #1c1917;
+      font: 16px/1.45 "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+    }
+    main { max-width: 920px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 40px; line-height: 1; margin: 0 0 8px; }
+    .deck { margin: 0 0 24px; font-size: 18px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    label { display: block; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
+    textarea, input {
+      width: 100%;
+      border: 1px solid #d6d3d1;
+      background: #fff;
+      color: inherit;
+      font: 14px/1.4 ui-monospace, "Cascadia Code", monospace;
+      padding: 10px;
+    }
+    textarea { min-height: 220px; resize: vertical; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    button {
+      border: 0;
+      background: #9a3412;
+      color: #fff;
+      font: 15px/1 "Iowan Old Style", Palatino, serif;
+      padding: 12px 14px;
+      cursor: pointer;
+    }
+    button.secondary { background: #44403c; }
+    .result { background: #fff; border-top: 4px solid #9a3412; padding: 16px 18px; }
+    .figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
+    .figures div { background: #faf7f2; padding: 10px; }
+    .figures b { display: block; font-size: 28px; }
+    .note { font-size: 17px; }
+    .warn { background: #1c1917; color: #faf7f2; padding: 14px; }
+    .meta { color: #57534e; font-size: 13px; }
+    ul { padding-left: 18px; }
+    @media (max-width: 720px) {
+      .grid, .figures { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Market Excuse Auditor</h1>
+    <p class="deck">Check a supplier’s reason for a price increase against the last invoice and a cited series.</p>
+    <div class="grid">
+      <div>
+        <label for="invoice">Last invoice</label>
+        <textarea id="invoice"></textarea>
+      </div>
+      <div>
+        <label for="quote">Today’s quote or message</label>
+        <textarea id="quote"></textarea>
+      </div>
+    </div>
+    <label for="question">Optional follow-up</label>
+    <input id="question" placeholder="What do we reply?" />
+    <div class="actions">
+      <button id="check" type="button">Check the explanation</button>
+      <button id="sample" class="secondary" type="button">Load the sample pair</button>
+      <button id="mismatch" class="secondary" type="button">Load a mismatched size</button>
+      <button id="whatsapp" class="secondary" type="button">Load the WhatsApp wording</button>
+    </div>
+    <section id="out"></section>
+  </main>
+  <script>
+    const invoice = document.querySelector("#invoice");
+    const quote = document.querySelector("#quote");
+    const question = document.querySelector("#question");
+    const out = document.querySelector("#out");
+    let samples = null;
+
+    async function loadSamples() {
+      samples = await fetch("/api/samples").then((response) => response.json());
+      invoice.value = samples.invoice;
+      quote.value = samples.quote;
+    }
+
+    function figure(title, value) {
+      return `<div><span>${title}</span><b>${value}</b></div>`;
+    }
+
+    function render(audit) {
+      if (!audit.comparable) {
+        out.innerHTML = `<div class="warn"><strong>Not comparable.</strong> ${audit.comparison_note}</div>`;
+        return;
+      }
+      const rows = audit.components.map((item) => {
+        if (item.used) {
+          return `<li>${item.name}: ${item.change} (${item.start} to ${item.end} ${item.unit}). ${item.source}.</li>`;
+        }
+        return `<li>${item.name}: ${item.unused_reason}</li>`;
+      }).join("");
+      out.innerHTML = `
+        <div class="result">
+          <div class="figures">
+            ${figure("Quote increase", audit.quote_change)}
+            ${figure("Explained", audit.explained)}
+            ${figure("Unexplained", audit.unexplained)}
+          </div>
+          <p class="note">${audit.note}</p>
+          ${audit.follow_up ? `<p><strong>Follow-up.</strong> ${audit.follow_up}</p>` : ""}
+          <p class="meta">Supplier reason: ${audit.reason || "none stated"}</p>
+          <ul>${rows}</ul>
+          <p class="meta">Mode: ${audit.model_mode}. ${audit.series_label}</p>
+        </div>`;
+    }
+
+    document.querySelector("#check").addEventListener("click", async () => {
+      out.innerHTML = "<p>Checking the documents.</p>";
+      const response = await fetch("/api/audits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invoice_text: invoice.value,
+          quote_text: quote.value,
+          question: question.value,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        out.innerHTML = `<div class="warn">${body.detail}</div>`;
+        return;
+      }
+      render(body);
+    });
+    document.querySelector("#sample").addEventListener("click", () => {
+      invoice.value = samples.invoice;
+      quote.value = samples.quote;
+    });
+    document.querySelector("#mismatch").addEventListener("click", () => {
+      invoice.value = samples.invoice;
+      quote.value = samples.quote_mismatch;
+    });
+    document.querySelector("#whatsapp").addEventListener("click", () => {
+      invoice.value = samples.invoice;
+      quote.value = samples.whatsapp;
+    });
+    loadSamples();
+  </script>
+</body>
+</html>

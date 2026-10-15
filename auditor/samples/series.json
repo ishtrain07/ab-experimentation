@@ -1,0 +1,33 @@
+{
+  "label": "Demonstration series shipped with the app. These are not live mill prices.",
+  "steel": {
+    "name": "Sample CR sheet index",
+    "source": "Checked-in demonstration series",
+    "unit": "index points",
+    "requires_claim": [],
+    "points": [
+      {"date": "2026-06-01", "value": "1000"},
+      {"date": "2026-10-01", "value": "1058"}
+    ]
+  },
+  "freight": {
+    "name": "Sample freight index",
+    "source": "Checked-in demonstration series",
+    "unit": "index points",
+    "requires_claim": ["freight", "shipping", "logistics"],
+    "points": [
+      {"date": "2026-06-01", "value": "1000"},
+      {"date": "2026-10-01", "value": "1016"}
+    ]
+  },
+  "fx": {
+    "name": "Sample USD/INR",
+    "source": "Checked-in demonstration series",
+    "unit": "INR per USD",
+    "requires_claim": ["import", "imports", "dollar", "exchange", "currency"],
+    "points": [
+      {"date": "2026-06-01", "value": "83"},
+      {"date": "2026-10-01", "value": "83.747"}
+    ]
+  }
+}
